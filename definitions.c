@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <windows.h> //is used to get a handle on the console and print text in color!
 
-#include "C:/Users/albaz/source/repos/Project4/Project4/declarations.h"
-#include "C:/Users/albaz/source/repos/Project4/Project4/config.h"
+#include "declarations.h"
+#include "config.h"
 
 int guesses; //the amount of guesses the player has left
 int g1, g2, g3, g4;  //the 4 digits of the player's guess
 int exist_and_placed;  // the amount of digits that exist and are correctly placed
-int exist;		   // the amount of digits that exist and are incorrectly placed 
+int exist;		   // the amount of digits that exist and are incorrectly placed
 
 int d1 = 0, d2 = 0, d3 = 0, d4 = 0;  //the 4 digits of the code the user is trying to guess
 
@@ -23,7 +24,7 @@ void GetDifficulty() {
 	int choice = -1;
 	while (choice == -1)
 	{
-		choice = getch();
+		choice=getchar();
 		switch (choice)
 		{
 		case '1':
@@ -63,7 +64,7 @@ void GenerateExclusiveNumber(int* d, int* numarr) {
 }
 int Validguess(int guess) {
 	char buffer;
-	if (scanf_s("%d%c", &guess, &buffer) != 2 || buffer != '\n') {
+	if (scanf("%d%c", &guess, &buffer) != 2 || buffer != '\n') {
 		printf("Invalid input - enter a 4-digit code!\n");
 	}
 	else {
@@ -87,38 +88,75 @@ int Validguess(int guess) {
 	}
 }
 void GenerateValidationConditions(int guess) {
-	g1 = guess % (int)RADIX;
-	g2 = (guess / 10) % RADIX;
-	g3 = (guess / 100) % RADIX;
-	g4 = (guess / 1000) % RADIX;
+	g4 = guess % (int)RADIX;
+	g3 = (guess / 10) % RADIX;
+	g2 = (guess / 100) % RADIX;
+	g1 = (guess / 1000) % RADIX;
 
 	no_reoccurring_digits = (g1 != g2)&(g1 != g3)&(g1 != g4) & (g2 != g3)&(g2 != g4) & (g3 != g4);
 	one_to_six = ((g1<7)&(g1>0)) & ((g2<7)&(g2>0)) & ((g3<7)&(g3>0)) & ((g4>0)&(g4<7));
 	four_digits = ((guess>999)&(guess<10000));
 }
 void Checkguess(int guess) {
-	exist_and_placed = 0;exist = 0;
-	if (g1 == d1)
-		exist_and_placed++;
-	else { if (g1 == d2 || g1 == d3 || g1 == d4)exist++; }
-	if (g2 == d2)
-		exist_and_placed++;
-	else { if (g2 == d1 || g2 == d3 || g2 == d4)exist++; }
-	if (g3 == d3)
-		exist_and_placed++;
-	else { if (g3 == d1 || g3 == d2 || g3 == d4)exist++; }
-	if (g4 == d4)
-		exist_and_placed++;
-	else { if (g4 == d1 || g4 == d3 || g4 == d2)exist++; }
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //connecting to the console.
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    WORD saved_attributes;
+    GetConsoleScreenBufferInfo(hConsole, &consoleInfo); //getting info from the console, including the font's info.
+    saved_attributes = consoleInfo.wAttributes; //saving the original system text color.
 
+
+    exist_and_placed=0;
+
+    SetConsoleTextAttribute(hConsole, DOESNT_EXIST_COLOR);
+	if (g1 == d1){
+        exist_and_placed++;
+		SetConsoleTextAttribute(hConsole, EXIST_AND_PLACED_COLOR);
+	}
+	else {
+            if (g1 == d2 || g1 == d3 || g1 == d4){
+                    SetConsoleTextAttribute(hConsole, EXIST_NOT_PLACED_COLOR);
+            }
+    }
+    printf("%d",g1);
+    SetConsoleTextAttribute(hConsole, DOESNT_EXIST_COLOR);
+	if (g2 == d2){
+		exist_and_placed++;
+		SetConsoleTextAttribute(hConsole, EXIST_AND_PLACED_COLOR);
+	}
+	else {
+            if (g2 == d1 || g2 == d3 || g2 == d4){
+                    SetConsoleTextAttribute(hConsole, EXIST_NOT_PLACED_COLOR);
+            }
+    }
+    printf("%d",g2);
+    SetConsoleTextAttribute(hConsole, DOESNT_EXIST_COLOR);
+	if (g3 == d3){
+		exist_and_placed++;
+		SetConsoleTextAttribute(hConsole, EXIST_AND_PLACED_COLOR);
+	}
+	else {
+            if (g3 == d1 || g3 == d2 || g3 == d4){
+                    SetConsoleTextAttribute(hConsole, EXIST_NOT_PLACED_COLOR);
+            }
+    }
+    printf("%d",g3);
+    SetConsoleTextAttribute(hConsole, DOESNT_EXIST_COLOR);
+	if (g4 == d4){
+		exist_and_placed++;
+		SetConsoleTextAttribute(hConsole, EXIST_AND_PLACED_COLOR);
+	}
+	else {
+            if (g4 == d1 || g4 == d3 || g4 == d2){
+                    SetConsoleTextAttribute(hConsole, EXIST_NOT_PLACED_COLOR);
+            }
+    }
+    printf("%d\n",g4);
+    SetConsoleTextAttribute(hConsole, saved_attributes);
 	if (exist_and_placed == 4) {
 		Winner();
 	}
-	else {
-		printf("%d Digits are in the right place, %d Digits exist but are in the wrong place and %d Digits Don't exist\n", exist_and_placed, exist, 4 - (exist_and_placed + exist));
-		if (guesses == 1) {
+	else if (guesses == 1) {
 			Loser();
-		}
 	}
 }
 void GuessGameplay() {
@@ -126,6 +164,7 @@ void GuessGameplay() {
 	exist_and_placed = 0;
 	exist = 0;
 	printf("A 4-Digit code has been genrated! Now it's guessing time.\nRemember! The digits are between 1-6!\n");
+	printf("The digits are color coded according to the following:\nGreen digits are in the right place.\nBlue digits exist but arent in the right place.\nRed digits dont exist at all.\n");
 	while ((guesses != 0) & (exist_and_placed != 4)) {
 		printf("you have %d guesses left...\n", guesses);
 		if (Validguess(guess))
